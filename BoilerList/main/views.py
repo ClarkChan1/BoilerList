@@ -21,6 +21,54 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 
 
+
+@login_required
+def organization_approve_update(request):
+    status = request.GET['status']
+    organization_id = request.GET['organizationid']
+
+    if status == 'Approve':
+        flag = True
+    else:
+        flag = False
+    organization = Organization.objects.get(pk=organization_id)
+    try:
+        organization.approve = flag
+        organization.save()
+        #write back
+        return HttpResponse(status)
+    except Exception as e:
+        return JsonResponse(status)
+
+# for aprroval of project on admin side when it is made
+@login_required
+def community_job_approve_update(request):
+    status = request.GET['status']
+    print(status)
+    community_job_id = request.GET['community_job_id']
+    print("community id is:")
+    print(community_job_id)
+    approve_flag = False
+    deny_flag = False
+    community_job = Job.objects.get(pk=community_job_id)
+    if status =='Approve_job'+community_job.name:
+        print("Inside true")
+        approve_flag = True
+    else:
+        deny_flag = True
+    print(community_job)
+    try:
+        community_job.approve = approve_flag
+        community_job.deny = deny_flag
+        print(community_job.approve)
+        community_job.save()
+        #write back
+        return HttpResponse(status)
+    except Exception as e:
+        return JsonResponse(status)
+
+
+
 def quicksearch(request):
     orgs = Organization.objects.all()
     return render(request,'main/quicksearch.html',
@@ -101,7 +149,7 @@ def user_dash(request):
             except Organization.DoesNotExist:
                 group.delete()                  #DELETE THE GROUP IF IT HAS NO ORGANIZATION (FACULTY PROPOSAL) IN IT
 
-        jobs = Job.objects.all().filter(active=True)
+        jobs = Job.objects.all().filter(active=True, approve=True)
         #print(type(jobs))
 
         return render(request,
@@ -370,7 +418,7 @@ def organization_create(request):
     #if the request was a GET
     if request.method == 'GET':
         form = OrganizationCreateForm()
-        
+
 
     #if this request was a POST
     elif request.method == 'POST':
@@ -392,7 +440,7 @@ def organization_create(request):
             messages.add_message(request, messages.INFO, message)
             return redirect('user_dash')
 
-    return render(request, 'main/organization_create.html', 
+    return render(request, 'main/organization_create.html',
                             {'form':form,
                              'show_dialog':show_dialog})
 
@@ -546,22 +594,8 @@ def organization_status_update(request):
     except Exception as e:
         return JsonResponse(status)
 
-# for aprroval of project on admin side when it is made
-@login_required
-def job_approve_update(request):
-    status = request.GET['approve']
-    job_id = request.GET['Jobid']
-    if approve == 'Yes':
-        flag = True
-    else:
-        flag = False
-    job = Job.objects.get(pk=job_id)
-    try:
-        job.approve = flag
-        job.save()
-        return HttpResponse(status)
-    except Exception as e:
-        return JsonResponse(status)
+
+
 
 
 @login_required
